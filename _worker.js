@@ -5,7 +5,7 @@ let mytoken= ['auto'];//快速订阅访问入口, 留空则不启动快速订阅
 
 // 设置优选地址，不带端口号默认987
 let addresses = [
-	'engage.cloudflareclient.com:2408#WAPR官方直连',
+	//'engage.cloudflareclient.com:2408#WAPR官方直连',
 	//'162.159.195.128:987#WARP',
 ];
 
@@ -149,7 +149,7 @@ async function getADDCSV() {
 			continue;
 		}
 	}
-	console.log(newAddressescsv);
+	//console.log(newAddressescsv);
 	return newAddressescsv;
 }
 
@@ -195,6 +195,12 @@ async function ADD(envadd) {
 }
 
 let DNS = "1.1.1.1";
+let PrivateKey = "AOyELXS8h+FmTpokaMobeIP/nVftDPu2qHuBAGb93ns=";
+let ipv4 = "172.16.0.2/32";
+let ipv6 ;
+let MTU = "1280";
+let PublicKey = "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=";
+
 export default {
 	async fetch (request, env) {
 		if (env.TOKEN) mytoken = await ADD(env.TOKEN);
@@ -207,18 +213,18 @@ export default {
 		const userAgentHeader = request.headers.get('User-Agent');
 		const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
 		const url = new URL(request.url);
-		let PrivateKey = url.searchParams.get('key') || url.searchParams.get('privatekey') || "AOyELXS8h+FmTpokaMobeIP/nVftDPu2qHuBAGb93ns=";//私钥
-		let ipv4 = url.searchParams.get('ipv4') || "172.16.0.2/32";//ip4
-		let ipv6 = url.searchParams.get('ipv6');
-		DNS = url.searchParams.get('dns') || DNS;
-		let MTU = url.searchParams.get('mtu') || "1280";
-		let PublicKey = url.searchParams.get('publicKey') || "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=";//公钥
+
+		if (env.ADD) addresses = await ADD(env.ADD);
+		if (env.ADDAPI) addressesapi = await ADD(env.ADDAPI);
+		if (env.ADDCSV) addressescsv = await ADD(env.ADDCSV);
+		DELAY = env.DELAY || DELAY;
+
 		let UD = Math.floor(((timestamp - Date.now())/timestamp * 99 * 1099511627776 * 1024)/2);
 		total = total * 1099511627776 * 1024;
 		let expire= Math.floor(timestamp / 1000) ;
 		if (mytoken.length > 0 && mytoken.some(token => url.pathname.includes(token))) {
 			if (!userAgent.includes('subconverter')) await sendMessage("#获取订阅", request.headers.get('CF-Connecting-IP'), `UA: ${userAgentHeader}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
-			if (WarpKeyURL){
+			if (WarpKeys.length == 0 && WarpKeyURL){
 				try {
 					const response = await fetch(WarpKeyURL); 
 				
@@ -242,13 +248,8 @@ export default {
 					console.error('获取地址时出错:', error);
 				}
 			}
-			const WarpKey = WarpKeys[Math.floor(Math.random() * WarpKeys.length)];
 
-			PrivateKey = WarpKey.split(',')[0] || PrivateKey;
-			ipv4 = WarpKey.split(',')[3] || ipv4;
-			ipv6 = WarpKey.split(',')[4] || ipv6;
-			MTU = WarpKey.split(',')[2] || MTU;
-			PublicKey = WarpKey.split(',')[1] || PublicKey;
+			if (WarpKeys.length == 0)WarpKeys = [`${PrivateKey},${PublicKey},${MTU},${ipv4},${ipv6}`];
 /*
 			console.log(`
 			WarpKey: ${WarpKey}
@@ -266,7 +267,16 @@ export default {
 					'Content-Type': 'text/html; charset=UTF-8',
 				},
 			});
+		} else {
+			PrivateKey = url.searchParams.get('key') || url.searchParams.get('privatekey') || PrivateKey;//私钥
+			ipv4 = url.searchParams.get('ipv4') || ipv4;
+			ipv6 = url.searchParams.get('ipv6') || ipv6;
+			DNS = url.searchParams.get('dns') || DNS;
+			MTU = url.searchParams.get('mtu') || MTU;
+			PublicKey = url.searchParams.get('publicKey') || PublicKey;
+			WarpKeys = [`${PrivateKey},${PublicKey},${MTU},${ipv4},${ipv6}`];
 		}
+		//console.log(WarpKeys);
 		const newAddressesapi = await getADDAPI(addressesapi);
 		const newAddressescsv = await getADDCSV();
 		addresses = addresses.concat(newAddressesapi);
@@ -294,7 +304,7 @@ export default {
 					"Subscription-Userinfo": `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
 				},
 			});
-		} else if (userAgent.includes('singbox') || userAgent.includes('sing-box')){
+		} else if (userAgent.includes('singbox') || userAgent.includes('sing-box') || userAgentHeader == 'v2rayng'){
 			const 输出结果 = await SUBAPI('singbox',request);
 			return new Response(`${输出结果}`, {
 				headers: { 
@@ -321,6 +331,13 @@ export default {
 
 async function v2rayN(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 	const responseBody = 优选IP数组.map(ip => {
+		const WarpKey = WarpKeys[Math.floor(Math.random() * WarpKeys.length)];
+		//console.log(WarpKey);
+		私钥 = WarpKey.split(',')[0] || 私钥;
+		ipv4 = WarpKey.split(',')[3] || ipv4;
+		ipv6 = WarpKey.split(',')[4] || ipv6;
+		MTU = WarpKey.split(',')[2] || MTU;
+		公钥 = WarpKey.split(',')[1] || 公钥;
 		let port = "987";
 		let id = ip;
 	
@@ -352,7 +369,8 @@ async function v2rayN(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		}
 
 		let address = ipv4;
-		if (ipv6) address += `,${ipv6}`;
+		if (ipv6 && ipv6!= "undefined") address += `,${ipv6}`;
+		//console.log(address);
 		const wireguardLink = `wireguard://${encodeURIComponent(私钥)}@${ip}:${port}/?publickey=${encodeURIComponent(公钥)}&address=${address}&mtu=${MTU}#${encodeURIComponent(id + EndPS)}`;
 		return wireguardLink;
 	}).join('\n');
@@ -362,6 +380,13 @@ async function v2rayN(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 
 async function 小火箭(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 	const responseBody = 优选IP数组.map(ip => {
+		const WarpKey = WarpKeys[Math.floor(Math.random() * WarpKeys.length)];
+		//console.log(WarpKey);
+		私钥 = WarpKey.split(',')[0] || 私钥;
+		ipv4 = WarpKey.split(',')[3] || ipv4;
+		ipv6 = WarpKey.split(',')[4] || ipv6;
+		MTU = WarpKey.split(',')[2] || MTU;
+		公钥 = WarpKey.split(',')[1] || 公钥;
 		let port = "987";
 		let id = ip;
 	
@@ -393,7 +418,7 @@ async function 小火箭(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		}
 
 		let address = ipv4;
-		if (ipv6) address += `,${ipv6}`;
+		if (ipv6 && ipv6!= "undefined") address += `,${ipv6}`;
 		const wireguardLink = `wg://${ip}:${port}?publicKey=${公钥}&privateKey=${私钥}&ip=${address}&mtu=${MTU}&udp=1&reserved=0,0,0&flag=CDN#${encodeURIComponent(id + EndPS)}`;
 		return wireguardLink;
 	}).join('\n');
@@ -403,6 +428,13 @@ async function 小火箭(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 
 async function clash(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 	const responseBody = 优选IP数组.map(ip => {
+		const WarpKey = WarpKeys[Math.floor(Math.random() * WarpKeys.length)];
+		//console.log(WarpKey);
+		私钥 = WarpKey.split(',')[0] || 私钥;
+		ipv4 = WarpKey.split(',')[3] || ipv4;
+		ipv6 = WarpKey.split(',')[4] || ipv6;
+		MTU = WarpKey.split(',')[2] || MTU;
+		公钥 = WarpKey.split(',')[1] || 公钥;
 		let port = "987";
 		let id = ip;
 	
@@ -434,9 +466,9 @@ async function clash(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		}
 
 		const wireguardLink = `
-- ip: ${ipv4}
+- ip: ${ipv4.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)[0]}
   mtu: ${MTU}
-  name: ${id} ${EndPS}
+  name: ${id}${EndPS}
   port: ${port}
   private-key: ${私钥}
   public-key: ${公钥}
