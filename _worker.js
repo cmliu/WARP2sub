@@ -286,14 +286,12 @@ export default {
 		//console.log(uniqueAddresses);
 
 		let 汇总 = await v2rayN(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
+		汇总 += '\n' + await 小火箭(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 		let 输出结果 = btoa(汇总);
 
-		if (userAgent.includes('subconverter') || userAgent.includes('cf-workers-sub')){
+		if (userAgent.includes('subconverter')){
 			汇总 = await clash(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 			输出结果 = 汇总;
-		} else if (userAgent.includes('shadowrocket') || userAgent.includes('mozilla')){
-			汇总 += '\n' + await 小火箭(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
-			输出结果 = btoa(汇总);
 		} else if (userAgent.includes('clash')){
 			const 输出结果 = await SUBAPI('clash',request);
 			return new Response(`${输出结果}`, {
