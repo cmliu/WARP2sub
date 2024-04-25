@@ -277,14 +277,25 @@ export default {
 			WarpKeys = [`${PrivateKey},${PublicKey},${MTU},${ipv4},${ipv6}`];
 		}
 		//console.log(WarpKeys);
-		const newAddressesapi = await getADDAPI(addressesapi);
-		const newAddressescsv = await getADDCSV();
-		addresses = addresses.concat(newAddressesapi);
-		addresses = addresses.concat(newAddressescsv);
+		if (url.searchParams.has('ip')){
+			addresses = [url.searchParams.get('ip')];
+			//console.log(addresses);
+		} else {
+			const newAddressesapi = await getADDAPI(addressesapi);
+			const newAddressescsv = await getADDCSV();
+			addresses = addresses.concat(newAddressesapi);
+			addresses = addresses.concat(newAddressescsv);
+		}
+
 		// 使用Set对象去重
 		const uniqueAddresses = [...new Set(addresses)];
 		//console.log(uniqueAddresses);
 
+		if (url.searchParams.has('warp')) {
+			const 输出结果 = await wgLink(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
+			return new Response(`${输出结果}`);
+		}
+		
 		let 汇总 = await v2rayN(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 		汇总 += '\n' + await 小火箭(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 		let 输出结果 = btoa(汇总);
@@ -337,7 +348,7 @@ async function v2rayN(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		MTU = WarpKey.split(',')[2] || MTU;
 		公钥 = WarpKey.split(',')[1] || 公钥;
 		let port = "987";
-		let id = ip;
+		let id = 'WARP';
 	
 		const match = id.match(regex);
 		if (!match) {
@@ -363,7 +374,7 @@ async function v2rayN(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		} else {
 			ip = match[1];
 			port = match[2] || port;
-			id = match[3] || ip;
+			id = match[3] || id;
 		}
 
 		let address = ipv4;
@@ -386,7 +397,7 @@ async function 小火箭(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		MTU = WarpKey.split(',')[2] || MTU;
 		公钥 = WarpKey.split(',')[1] || 公钥;
 		let port = "987";
-		let id = ip;
+		let id = 'WARP';
 	
 		const match = id.match(regex);
 		if (!match) {
@@ -412,7 +423,7 @@ async function 小火箭(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		} else {
 			ip = match[1];
 			port = match[2] || port;
-			id = match[3] || ip;
+			id = match[3] || id;
 		}
 
 		let address = ipv4;
@@ -434,7 +445,7 @@ async function clash(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		MTU = WarpKey.split(',')[2] || MTU;
 		公钥 = WarpKey.split(',')[1] || 公钥;
 		let port = "987";
-		let id = ip;
+		let id = 'WARP';
 	
 		const match = id.match(regex);
 		if (!match) {
@@ -460,7 +471,7 @@ async function clash(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 		} else {
 			ip = match[1];
 			port = match[2] || port;
-			id = match[3] || ip;
+			id = match[3] || id;
 		}
 
 		const wireguardLink = `
@@ -471,6 +482,7 @@ async function clash(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
   private-key: ${私钥}
   public-key: ${公钥}
   remote-dns-resolve: true
+  dns: [ ${DNS} ]
   server: ${ip}
   type: wireguard
   udp: true`;
@@ -489,6 +501,101 @@ proxy-groups:
 rules:`;
 
 	return yaml;
+}
+
+async function wgLink(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
+	let WARP前置ID = "🌐 WARP前置线路";
+	let 起始数值 = 0;
+	const responseBody = 优选IP数组.map(ip => {
+		const WarpKey = WarpKeys[Math.floor(Math.random() * WarpKeys.length)];
+		//console.log(WarpKey);
+		私钥 = WarpKey.split(',')[0] || 私钥;
+		ipv4 = WarpKey.split(',')[3] || ipv4;
+		ipv6 = WarpKey.split(',')[4] || ipv6;
+		MTU = WarpKey.split(',')[2] || MTU;
+		公钥 = WarpKey.split(',')[1] || 公钥;
+		let port = "987";
+		let id = 'WARP';
+	
+		const match = id.match(regex);
+		if (!match) {
+			if (ip.includes(':') && ip.includes('#')) {
+				const parts = ip.split(':');
+				ip = parts[0];
+				const subParts = parts[1].split('#');
+				port = subParts[0];
+				id = subParts[1];
+			} else if (ip.includes(':')) {
+				const parts = ip.split(':');
+				ip = parts[0];
+				port = parts[1];
+			} else if (ip.includes('#')) {
+				const parts = ip.split('#');
+				ip = parts[0];
+				id = parts[1];
+			}
+		
+			if (id.includes(':')) {
+				id = id.split(':')[0];
+			}
+		} else {
+			ip = match[1];
+			port = match[2] || port;
+			id = match[3] || id;
+		}
+		起始数值 += 1;
+		const 节点ID = `${id} ${起始数值}${EndPS}`;
+		const wireguardLink = `  - {name: ${节点ID} , server: ${ip}, port: ${port}, reality-opts: {public-key: ${公钥}}, client-fingerprint: chrome, type: wireguard, public-key: ${公钥}, private-key: ${私钥}, ip: ${ipv4.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)[0]}, dns: [1.1.1.1],remote-dns-resolve: true, mtu: 1280, udp: true, dialer-proxy: "${WARP前置ID}"}`;
+		
+		return wireguardLink;
+	}).join('\n');
+
+	起始数值 = 0;
+	const proxies = 优选IP数组.map(ip => {
+		const WarpKey = WarpKeys[Math.floor(Math.random() * WarpKeys.length)];
+		//console.log(WarpKey);
+		私钥 = WarpKey.split(',')[0] || 私钥;
+		ipv4 = WarpKey.split(',')[3] || ipv4;
+		ipv6 = WarpKey.split(',')[4] || ipv6;
+		MTU = WarpKey.split(',')[2] || MTU;
+		公钥 = WarpKey.split(',')[1] || 公钥;
+		let port = "987";
+		let id = 'WARP';
+	
+		const match = id.match(regex);
+		if (!match) {
+			if (ip.includes(':') && ip.includes('#')) {
+				const parts = ip.split(':');
+				ip = parts[0];
+				const subParts = parts[1].split('#');
+				port = subParts[0];
+				id = subParts[1];
+			} else if (ip.includes(':')) {
+				const parts = ip.split(':');
+				ip = parts[0];
+				port = parts[1];
+			} else if (ip.includes('#')) {
+				const parts = ip.split('#');
+				ip = parts[0];
+				id = parts[1];
+			}
+		
+			if (id.includes(':')) {
+				id = id.split(':')[0];
+			}
+		} else {
+			ip = match[1];
+			port = match[2] || port;
+			id = match[3] || id;
+		}
+		起始数值 += 1;
+		const 节点ID = `${id} ${起始数值}${EndPS}`;
+		const wireguardLink = `      - ${节点ID}`;
+		
+		return wireguardLink;
+	}).join('\n');
+
+	return `${WARP前置ID}\n\ncmliu/WARP2sub\n\n${proxies}\n\ncmliu/WARP2sub\n\n${responseBody}`;
 }
 
 async function SUBAPI(target,request) {
