@@ -261,6 +261,12 @@ export default {
 			`);
 */
 		} else if (!url.pathname.includes("/sub")){
+			const envKey = env.URL302 ? 'URL302' : (env.URL ? 'URL' : null);
+			if (envKey) {
+				const URLs = await ADD(env[envKey]);
+				const URL = URLs[Math.floor(Math.random() * URLs.length)];
+				return envKey === 'URL302' ? Response.redirect(URL, 302) : fetch(new Request(URL, request));
+			}
 			//首页改成一个nginx伪装页
 			return new Response(await nginx(), {
 				headers: {
@@ -280,13 +286,19 @@ export default {
 		if (url.searchParams.has('ip')){
 			addresses = [url.searchParams.get('ip')];
 			//console.log(addresses);
+		} else if (url.searchParams.has('api')){
+			addressesapi = [url.searchParams.get('api')];
+			addresses = await getADDAPI(addressesapi);
+		} else if (url.searchParams.has('csv')){
+			addressescsv = [url.searchParams.get('csv')];
+			addresses = await getADDCSV();
 		} else {
 			const newAddressesapi = await getADDAPI(addressesapi);
 			const newAddressescsv = await getADDCSV();
 			addresses = addresses.concat(newAddressesapi);
 			addresses = addresses.concat(newAddressescsv);
 		}
-
+		console.log(addresses);
 		// 使用Set对象去重
 		const uniqueAddresses = [...new Set(addresses)];
 		//console.log(uniqueAddresses);
@@ -299,6 +311,13 @@ export default {
 		let 汇总 = await v2rayN(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 		汇总 += '\n' + await 小火箭(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 		let 输出结果 = btoa(汇总);
+
+		if (userAgent.includes(('CF-Workers-SUB').toLowerCase())){
+			if (userAgent.includes('clash') || userAgent.includes('singbox') || userAgent.includes('sing-box')){
+				汇总 = await clash(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
+				输出结果 = 汇总;
+			}
+		}
 
 		if (userAgent.includes('subconverter')){
 			汇总 = await clash(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
