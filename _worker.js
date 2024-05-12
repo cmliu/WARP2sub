@@ -210,6 +210,7 @@ export default {
 		subconfig = env.SUBCONFIG || subconfig;
 		FileName = env.SUBNAME || FileName;
 		EndPS = env.PS || EndPS;
+		WarpKeyURL = env.KEYURL || WarpKeyURL
 		const userAgentHeader = request.headers.get('User-Agent');
 		const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
 		const url = new URL(request.url);
