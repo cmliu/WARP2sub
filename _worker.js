@@ -224,7 +224,7 @@ export default {
 		total = total * 1099511627776 * 1024;
 		let expire= Math.floor(timestamp / 1000) ;
 		if (mytoken.length > 0 && mytoken.some(token => url.pathname.includes(token))) {
-			if (!userAgent.includes('subconverter')) await sendMessage("#获取订阅", request.headers.get('CF-Connecting-IP'), `UA: ${userAgentHeader}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
+			if (!userAgent.includes('subconverter')) await sendMessage("#WARP订阅", request.headers.get('CF-Connecting-IP'), `UA: ${userAgentHeader}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 			if (WarpKeys.length == 0 && WarpKeyURL){
 				try {
 					const response = await fetch(WarpKeyURL); 
