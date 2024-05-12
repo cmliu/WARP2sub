@@ -312,14 +312,14 @@ export default {
 			if (userAgent.includes('clash') || userAgent.includes('singbox') || userAgent.includes('sing-box')){
 				汇总 = await clash(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 				输出结果 = 汇总;
-        return new Response(`${输出结果}`, {
-          headers: { 
-            //"Content-Disposition": `attachment; filename*=utf-8''${encodeURIComponent(FileName)}; filename=${FileName}`,
-            "content-type": "text/plain; charset=utf-8",
-            "Profile-Update-Interval": `${SUBUpdateTime}`,
-            "Subscription-Userinfo": `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
-          },
-        });
+				return new Response(`${输出结果}`, {
+					headers: { 
+						//"Content-Disposition": `attachment; filename*=utf-8''${encodeURIComponent(FileName)}; filename=${FileName}`,
+						"content-type": "text/plain; charset=utf-8",
+						"Profile-Update-Interval": `${SUBUpdateTime}`,
+						"Subscription-Userinfo": `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
+					},
+				});
 			}
 		}
 
