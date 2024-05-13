@@ -57,7 +57,7 @@ Telegram交流群：[@CMLiussss](https://t.me/CMLiussss)
  3. 生成指定优选结果的订阅信息
 
   ```url
-  https://[你的Workers域名]/sub?csv=[优选IP.txt文件地址]
+  https://[你的Workers域名]/sub??csv=[优选结果csv文件地址]
   例如
   https://WARP.fxxk.dedyn.io/sub?csv=https://raw.githubusercontent.com/cmliu/WARP2sub/main/result.csv
   ```
@@ -69,7 +69,7 @@ Telegram交流群：[@CMLiussss](https://t.me/CMLiussss)
 |--------|---------|-----|
 | TOKEN | auto | 快速订阅内置节点的订阅路径地址 /auto (支持多元素, 元素之间使用`,`作间隔)| 
 | KEYURL | iNw48fdfcf4wrc9i7A21gyFG09a3E3NPydvb2ysTQGY= | 在线PrivateKey私钥库地址 | 
-| ADD | icook.tw:2053#官方优选域名 | 对应`addresses`字段 (支持多元素, 元素之间使用`,`作间隔) | 
+| ADD | 162.159.195.179:987#WARP优选 | 对应`addresses`字段 (支持多元素, 元素之间使用`,`作间隔) | 
 | ADDAPI | [https://raw.github.../ip.txt](https://raw.githubusercontent.com/cmliu/WARP2sub/main/ip.txt) | 对应`addressesapi`字段 (支持多元素, 元素之间使用`,`作间隔) | 
 | ADDCSV | [https://raw.github.../result.csv](https://raw.githubusercontent.com/cmliu/WARP2sub/main/result.csv) | 对应`addressescsv`字段 (支持多元素, 元素之间使用`,`作间隔) | 
 | DELAY | 180 |`addressescsv`测速结果延迟上限 | 
