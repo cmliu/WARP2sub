@@ -19,7 +19,7 @@ let addressescsv = [
 	'https://raw.githubusercontent.com/cmliu/WARP2sub/main/result.csv', //warp-yxip测速结果文件。
 ];
 
-let subconverter = "apiurl.v1.mk"; //在线订阅转换后端，目前使用肥羊的订阅转换功能。支持自建psub 可自行搭建https://github.com/bulianglin/psub
+let subconverter = "url.v1.mk"; //在线订阅转换后端，目前使用肥羊的订阅转换功能。支持自建psub 可自行搭建https://github.com/bulianglin/psub
 let subconfig = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online_MultiCountry_WARP.ini"; //订阅转换配置文件
 let BotToken ='';
 let ChatID =''; 
@@ -330,7 +330,7 @@ export default {
 			汇总 = await clash(uniqueAddresses,PrivateKey,PublicKey,MTU,ipv4,ipv6);
 			输出结果 = 汇总;
 		} else if (userAgent.includes('clash') || url.searchParams.has('clash')){
-			const 输出结果 = await SUBAPI('clash',request);
+			const 输出结果 = await clashFix(await SUBAPI('clash',request)) ;
 			return new Response(`${输出结果}`, {
 				headers: { 
 					"Content-Disposition": `attachment; filename*=utf-8''${encodeURIComponent(FileName)}; filename=${FileName}`,
@@ -644,4 +644,29 @@ async function wgLink(优选IP数组,私钥,公钥,MTU,ipv4,ipv6) {
 	}).join('\n');
 
 	return `${WARP前置ID}\n\ncmliu/WARP2sub\n\n${proxies}\n\ncmliu/WARP2sub\n\n${responseBody}`;
+}
+
+function clashFix(content) {
+	if(!content.includes('remote-dns-resolve')){
+		let lines;
+		if (content.includes('\r\n')){
+			lines = content.split('\r\n');
+		} else {
+			lines = content.split('\n');
+		}
+	
+		let result = "";
+		for (let line of lines) {
+			if (line.includes('type: wireguard')) {
+				const 备改内容 = `, mtu: 1280, udp: true`;
+				const 正确内容 = `, mtu: 1280, remote-dns-resolve: true, udp: true`;
+				result += line.replace(new RegExp(备改内容, 'g'), 正确内容) + '\n';
+			} else {
+				result += line + '\n';
+			}
+		}
+
+		content = result;
+	}
+	return content;
 }
